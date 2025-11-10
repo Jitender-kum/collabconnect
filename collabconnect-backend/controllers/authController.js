@@ -1,115 +1,82 @@
-import bcrypt from "bcrypt";
+import User from "../models/users.js"; // ✅ Fixed: 'User.js' se 'users.js' kar diya
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import User from "../models/users.js";
-import OTP from "../models/OTP.js";
-import { sendMail } from "../utils/sendMail.js";
-
-// helper: handle → full URL
-const toUrl = (val, base) => {
-  if (!val) return "";
-  const v = val.trim();
-  if (v.startsWith("http://") || v.startsWith("https://")) return v;
-  if (v.startsWith("@")) return base + v.slice(1);
-  return base + v;
-};
 
 export const registerInfluencer = async (req, res) => {
-  console.log("REQ BODY =>", req.body);
-
   try {
     const { name, email, password, niche, links } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Missing fields" });
-    }
-
-    if (!Array.isArray(links) || links.length === 0) {
-      return res.status(400).json({ message: "At least one social account is required." });
-    }
-
     const exists = await User.findOne({ email });
-    if (exists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    // ✅ Sanitize followers count
-    const cleanedLinks = links.map(l => ({
-      platform: l.platform.trim(),
-      url: l.url.trim(),
-      followers: Number(l.followers || 0)
-    }));
-
-    // ✅ Calculate reach score from followers
-    const reachScore = cleanedLinks.reduce((sum, l) => sum + l.followers, 0);
+    if (exists) return res.status(400).json({ message: "Email already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
 
-    await User.create({
+    const user = await User.create({
       name,
       email,
       password: hashed,
-      role: "Influencer",
       niche,
-      socialLinks: cleanedLinks,
-      reachScore,
+      role: "Influencer",
+      socialLinks: links
     });
 
-    // ✅ Generate OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await OTP.create({ email, code });
-
-    // ✅ Send Email
-    await sendMail(email, "Verify your CollabConnect Account", `Your OTP is: ${code}`);
-
-    return res.json({ message: "Registration successful. Check your email for OTP.", email });
-
-  } catch (e) {
-    console.log(e);
-    return res.status(500).json({ message: "Server Error", error: e.message });
+    res.json({ message: "Influencer registered" });
+  } catch (err) {
+    console.error("Register Error:", err); // Added error logging for better debugging
+    res.status(500).json({ message: "Server Error" });
   }
 };
-
 
 export const registerBrand = async (req, res) => {
   try {
     const { brandName, email, password, website } = req.body;
-    if (!brandName || !email || !password) return res.status(400).json({ message: "Missing fields" });
 
     const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: "Brand already exists" });
+    if (exists) return res.status(400).json({ message: "Email already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
-    await User.create({ brandName, email, password: hashed, role: "Brand", website });
-    
-     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await OTP.create({ email, code });
+    await User.create({
+      brandName,
+      email,
+      website,
+      password: hashed,
+      role: "Brand"
+    });
 
-    // ✅ Send OTP Email
-    await sendMail(email, "Your CollabConnect Verification OTP", `Your OTP is: ${code}`);
-
-    return res.json({ message: "Registration successful ✅. Check your email for OTP.", email });
-    
-  } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    res.json({ message: "Brand registered" });
+  } catch (err) {
+    console.error("Brand Register Error:", err);
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
-
-
-export const loginUser = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    if (!user) return res.status(400).json({ message: "Invalid Credentials" });
 
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(400).json({ message: "Wrong Password" });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ message: "Invalid Credentials" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET);
-    const { password: _, ...safe } = user.toObject();
-    res.json({ message: "Login Successful ✅", token, user: safe });
-  } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    // Token generation
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.json({
+      message: "Login Success ✅",
+      token,
+      user: {
+        _id: user._id,
+        name: user.name || user.brandName,
+        email: user.email,
+        role: user.role,
+        // Add other necessary fields here, but avoid sending password
+      }
+    });
+  } catch (error) {
+      console.error("Login Error:", error);
+      res.status(500).json({ message: "Server Error during login" });
   }
 };

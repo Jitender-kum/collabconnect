@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/user.js";
-import campaignRoutes from "./routes/Campaign.js";
+import campaignRoutes from "./routes/campaign.js";
 import applyRoutes from "./routes/apply.js";
 import applicantRoutes from "./routes/applicants.js";
 

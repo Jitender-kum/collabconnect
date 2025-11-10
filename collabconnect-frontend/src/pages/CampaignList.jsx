@@ -6,7 +6,7 @@ export default function CampaignList() {
   const [msg, setMsg] = useState("Loading...");
 
   useEffect(() => {
-    api.get("/campaign/list")
+    api.get("/campaign")
       .then(r => { setList(r.data); setMsg(""); })
       .catch(() => setMsg("Failed to load"));
   }, []);

@@ -1,9 +1,9 @@
 import express from "express";
 import { getApplicantsForBrand } from "../controllers/viewApplicationsController.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/brand", verifyToken, getApplicantsForBrand);
+router.get("/brand", authMiddleware, getApplicantsForBrand);
 
 export default router;

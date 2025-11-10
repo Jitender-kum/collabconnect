@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // ✅ Link imported
 import api from "../api";
 
 export default function Applicants() {
@@ -35,7 +35,7 @@ export default function Applicants() {
           }))
         );
       }
-      
+
       await api.post("/application/update-status", { applicationId, status });
 
       const fresh = await api.get("/applicants/brand");
@@ -47,7 +47,6 @@ export default function Applicants() {
     }
   };
 
-  // ✅ Social Link Component
   const LinkList = ({ links }) => {
     if (!links || links.length === 0) return null;
 
@@ -63,7 +62,6 @@ export default function Applicants() {
     );
   };
 
-  // ✅ Followers + Reach Score Display
   const CountRow = ({ f = {}, reachScore = 0 }) => {
     const fmt = (n) => {
       const x = Number(n||0);
@@ -100,29 +98,50 @@ export default function Applicants() {
             {block.applicants.length === 0 ? (
               <p>No applications</p>
             ) : (
-              block.applicants.map(app => (
-                <div key={app.applicationId}
-                  style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 0", borderTop:"1px dashed #ddd" }}>
+              block.applicants.map(app => {
+                // 👇 DEBUGGING LOG ADDED
+                console.log("🕵️‍♂️ Applicant Data for debugging:", app);
 
-                  <div style={{ flex:1 }}>
-                    <div><b>{app.influencerName}</b> — {app.influencerNiche || "-"}</div>
-                    <div>Status: <b>{app.status}</b></div>
+                // ✅ ROBUST ID GETTER logic
+                let profileId = null;
+                if (app.influencerId) {
+                    if (typeof app.influencerId === 'string') {
+                        profileId = app.influencerId;
+                    } else if (typeof app.influencerId === 'object') {
+                        profileId = app.influencerId._id || app.influencerId.id;
+                    }
+                }
 
-                    <LinkList links={app.socialLinks} />
-                    <CountRow f={app.followerCounts} reachScore={app.reachScore} />
+                return (
+                  <div key={app.applicationId}
+                    style={{ display:"flex", gap:12, alignItems:"center", padding:"10px 0", borderTop:"1px dashed #ddd" }}>
 
-                    {/* ✅ Public Profile Link */}
-                    <a href={`/profile/${app.influencerId}`} target="_blank" className="btn ghost" style={{marginTop:"8px"}}>
-                      View Profile
-                    </a>
+                    <div style={{ flex:1 }}>
+                      <div><b>{app.influencerName}</b> — {app.influencerNiche || "-"}</div>
+                      <div>Status: <b>{app.status}</b></div>
+
+                      <LinkList links={app.socialLinks} />
+                      <CountRow f={app.followerCounts} reachScore={app.reachScore} />
+
+                      {/* ✅ SAFE PROFILE LINK RENDER */}
+                      {profileId ? (
+                          <Link to={`/profile/${profileId}`} target="_blank" className="btn ghost" style={{marginTop:"8px", display: 'inline-block'}}>
+                            View Profile
+                          </Link>
+                      ) : (
+                          <button disabled className="btn ghost" style={{marginTop:"8px", opacity: 0.6, cursor: 'not-allowed'}}>
+                             Profile ID Missing (See Console)
+                          </button>
+                      )}
+                    </div>
+
+                    <div style={{ display:"flex", gap:8 }}>
+                      <button onClick={()=>updateStatus(app.applicationId, "Accepted")}>Accept</button>
+                      <button onClick={()=>updateStatus(app.applicationId, "Rejected")}>Reject</button>
+                    </div>
                   </div>
-
-                  <div style={{ display:"flex", gap:8 }}>
-                    <button onClick={()=>updateStatus(app.applicationId, "Accepted")}>Accept</button>
-                    <button onClick={()=>updateStatus(app.applicationId, "Rejected")}>Reject</button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
 
           </div>

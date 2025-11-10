@@ -1,12 +1,10 @@
-import mongoose from "mongoose";
+import express from "express";
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { createCampaign, listCampaigns } from "../controllers/campaignController.js";
 
-const CampaignSchema = new mongoose.Schema({
-  brandId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  title: { type: String, required: true },
-  description: String,
-  budget: String,
-  niche: String
-}, { timestamps: true });
+const router = express.Router();
 
-// ✅ Fix Overwrite Error
-export default mongoose.models.Campaign || mongoose.model("Campaign", CampaignSchema);
+router.post("/create", authMiddleware, createCampaign);
+router.get("/", authMiddleware, listCampaigns);
+
+export default router;

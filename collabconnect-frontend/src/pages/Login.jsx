@@ -4,7 +4,7 @@ import api from "../api";
 import { useAuth } from "../auth";
 
 export default function Login() {
-  const { login } = useAuth();   // ✅ Correct: hook used INSIDE component
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -17,8 +17,8 @@ export default function Login() {
     try {
       const { data } = await api.post("/auth/login", form);
 
-      // ✅ Update global auth state
-      login(data.token, data.user);
+      // ✅ FIX: Store correct & full user object
+      login(data.token, data.user);   
 
       setMsg("Login Successful ✅ Redirecting...");
       setTimeout(() => navigate("/dashboard"), 600);

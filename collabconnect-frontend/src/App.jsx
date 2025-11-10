@@ -70,7 +70,7 @@ export default function App() {
 
           <Route path="/dashboard" element={<RequireAuth><SectionCard title="Dashboard"><Dashboard/></SectionCard></RequireAuth>} />
 
-          <Route path="/profile/:id" element={<ProfilePublic />} /> {/* ✅ fixed */}
+          <Route path="/profile/:id" element={<ProfilePublic />} /> 
 
           <Route path="/campaign/create" element={
             <RequireRole role="Brand">
