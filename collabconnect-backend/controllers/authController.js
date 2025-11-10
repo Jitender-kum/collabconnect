@@ -14,44 +14,33 @@ const toUrl = (val, base) => {
 };
 
 export const registerInfluencer = async (req, res) => {
+  console.log("REQ BODY =>", req.body);
+
   try {
-    const { name, email, password, niche, instagram, youtube, twitter, facebook } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ message: "Missing fields" });
+    const { name, email, password, niche, links } = req.body;
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: "User already exists" });
-
-    // build normalized links
-    const links = {
-      instagram: instagram ? toUrl(instagram, "https://instagram.com/") : "",
-      youtube:   youtube   ? (youtube.includes("channel/") || youtube.includes("watch?") || youtube.includes("@")
-                      ? (youtube.startsWith("http") ? youtube : `https://youtube.com/${youtube}`)
-                      : `https://youtube.com/@${youtube.replace(/^@/,"")}`) : "",
-      twitter:   twitter   ? toUrl(twitter, "https://x.com/") : "",
-      facebook:  facebook  ? toUrl(facebook, "https://facebook.com/") : "",
-    };
-
-
-    // ensure at least one link
-    if (![links.instagram, links.youtube, links.twitter, links.facebook].some(Boolean)) {
-      return res.status(400).json({ message: "Add at least one social link (Instagram / YouTube / X / Facebook)" });
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-        // NEW: follower counts (int & >=0)
-    const toInt = (v) => Math.max(0, parseInt(v || 0, 10) || 0);
-    const followerCounts = {
-      instagram: toInt(igFollowers),
-      youtube:   toInt(ytSubscribers),
-      twitter:   toInt(twFollowers),
-      facebook:  toInt(fbFollowers),
-    };
+    if (!Array.isArray(links) || links.length === 0) {
+      return res.status(400).json({ message: "At least one social account is required." });
+    }
 
-    // simple reach score (tune later)
-    const reachScore =
-      followerCounts.instagram * 1.0 +
-      followerCounts.youtube   * 1.2 +
-      followerCounts.twitter   * 0.8 +
-      followerCounts.facebook  * 0.6;
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // ✅ Sanitize followers count
+    const cleanedLinks = links.map(l => ({
+      platform: l.platform.trim(),
+      url: l.url.trim(),
+      followers: Number(l.followers || 0)
+    }));
+
+    // ✅ Calculate reach score from followers
+    const reachScore = cleanedLinks.reduce((sum, l) => sum + l.followers, 0);
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -61,22 +50,22 @@ export const registerInfluencer = async (req, res) => {
       password: hashed,
       role: "Influencer",
       niche,
-      socialLinks: links,
-      followerCounts,
-      reachScore
+      socialLinks: cleanedLinks,
+      reachScore,
     });
 
-     const code = Math.floor(100000 + Math.random() * 900000).toString();
-
+    // ✅ Generate OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
     await OTP.create({ email, code });
 
-    // ✅ Send OTP Email
-    await sendMail(email, "Your CollabConnect Verification OTP", `Your OTP is: ${code}`);
+    // ✅ Send Email
+    await sendMail(email, "Verify your CollabConnect Account", `Your OTP is: ${code}`);
 
     return res.json({ message: "Registration successful. Check your email for OTP.", email });
-  
+
   } catch (e) {
-    res.status(500).json({ message: "Server error", error: e.message });
+    console.log(e);
+    return res.status(500).json({ message: "Server Error", error: e.message });
   }
 };
 

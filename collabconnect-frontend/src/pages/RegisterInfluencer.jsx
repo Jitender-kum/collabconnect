@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";   // ✅ new
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 
 export default function RegisterInfluencer() {
-  const navigate = useNavigate(); // ✅ navigation enabled
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    name:"",
-    email:"",
-    password:"",
-    niche:""
+    name: "",
+    email: "",
+    password: "",
+    niche: ""
   });
 
   const [links, setLinks] = useState([
@@ -22,22 +22,33 @@ export default function RegisterInfluencer() {
     e.preventDefault();
     setMsg("");
 
-    // ✅ Correct "At least 1 social link" validation
-    const hasAny = links.some(l => l.platform.trim() && l.url.trim());
-    if (!hasAny) {
-      setMsg("Please add at least one social account.");
+    // ✅ Validate dynamic `links` array
+    const validLinks = links.filter(
+      l => l.platform.trim() !== "" && l.url.trim() !== ""
+    );
+
+    if (validLinks.length === 0) {
+      setMsg("At least one social account is required.");
       return;
     }
 
+    // ✅ Ensure followers is a number
+    validLinks.forEach(l => {
+      l.followers = Number(l.followers || 0);
+    });
+
     try {
-      const { data } = await api.post("/auth/register-influencer", { ...form, links });
+      const payload = { ...form, links: validLinks };
+      const { data } = await api.post("/auth/register-influencer", payload);
 
-      setMsg(data.message || "Registered!");
+      setMsg("OTP sent to your email ✅ Redirecting...");
+      
+      // ✅ Redirect to OTP verification screen
+      navigate("/verify-otp?email=" + form.email);
 
-      // ✅ Redirect to OTP page
-      setTimeout(() => {
-        navigate("/verify-otp?email=" + form.email);
-      }, 800);
+      // Reset fields
+      setForm({ name: "", email: "", password: "", niche: "" });
+      setLinks([{ platform: "", url: "", followers: "" }]);
 
     } catch (err) {
       setMsg(err.response?.data?.message || "Error");
@@ -46,32 +57,52 @@ export default function RegisterInfluencer() {
 
   return (
     <form className="form" onSubmit={submit}>
-      <input className="input" placeholder="Name" value={form.name}
-        onChange={e=>setForm({...form, name:e.target.value})} required />
+      <input
+        className="input"
+        placeholder="Name"
+        value={form.name}
+        onChange={e => setForm({ ...form, name: e.target.value })}
+        required
+      />
 
-      <input className="input" type="email" placeholder="Email" value={form.email}
-        onChange={e=>setForm({...form, email:e.target.value})} required />
+      <input
+        className="input"
+        type="email"
+        placeholder="Email"
+        value={form.email}
+        onChange={e => setForm({ ...form, email: e.target.value })}
+        required
+      />
 
-      <input className="input" type="password" placeholder="Password" value={form.password}
-        onChange={e=>setForm({...form, password:e.target.value})} required />
+      <input
+        className="input"
+        type="password"
+        placeholder="Password"
+        value={form.password}
+        onChange={e => setForm({ ...form, password: e.target.value })}
+        required
+      />
 
-      <input className="input" placeholder="Niche (e.g., Travel, Fitness)" value={form.niche}
-        onChange={e=>setForm({...form, niche:e.target.value})} />
+      <input
+        className="input"
+        placeholder="Niche (e.g., Travel, Fitness)"
+        value={form.niche}
+        onChange={e => setForm({ ...form, niche: e.target.value })}
+      />
 
       {/* ✅ Social Links UI */}
       <h4 style={{ marginTop: 14 }}>Social Accounts</h4>
 
       {links.map((item, index) => (
-        <div key={index} style={{ display:"flex", gap:10, marginBottom:8, flexWrap:"wrap" }}>
-
+        <div key={index} style={{ display: "flex", gap: 10, marginBottom: 8, flexWrap: "wrap" }}>
           <select
             className="input"
-            style={{ width:"150px" }}
+            style={{ width: "150px" }}
             value={item.platform}
             onChange={(e) => {
-              const newLinks = [...links];
-              newLinks[index].platform = e.target.value;
-              setLinks(newLinks);
+              const updated = [...links];
+              updated[index].platform = e.target.value;
+              setLinks(updated);
             }}
             required
           >
@@ -88,9 +119,9 @@ export default function RegisterInfluencer() {
             placeholder="Profile URL or @username"
             value={item.url}
             onChange={(e) => {
-              const newLinks = [...links];
-              newLinks[index].url = e.target.value;
-              setLinks(newLinks);
+              const updated = [...links];
+              updated[index].url = e.target.value;
+              setLinks(updated);
             }}
             required
           />
@@ -101,23 +132,30 @@ export default function RegisterInfluencer() {
             placeholder="Followers (optional)"
             value={item.followers}
             onChange={(e) => {
-              const newLinks = [...links];
-              newLinks[index].followers = e.target.value;
-              setLinks(newLinks);
+              const updated = [...links];
+              updated[index].followers = e.target.value;
+              setLinks(updated);
             }}
-            style={{ width:"160px" }}
+            style={{ width: "160px" }}
           />
 
           {index > 0 && (
-            <button type="button"
+            <button
+              type="button"
               onClick={() => setLinks(links.filter((_, i) => i !== index))}
-              style={{ padding:"6px" }}>✖</button>
+              style={{ padding: "6px" }}
+            >
+              ✖
+            </button>
           )}
         </div>
       ))}
 
-      <button type="button" className="btn ghost"
-        onClick={() => setLinks([...links, { platform:"", url:"", followers:"" }])}>
+      <button
+        type="button"
+        className="btn ghost"
+        onClick={() => setLinks([...links, { platform: "", url: "", followers: "" }])}
+      >
         + Add another account
       </button>
 
@@ -125,7 +163,7 @@ export default function RegisterInfluencer() {
 
       <div className="kv">
         <button className="btn primary" type="submit">Create Account</button>
-        {msg && <span className={`notice ${/Registered|✅/i.test(msg)?'success':'error'}`}>{msg}</span>}
+        {msg && <span className={`notice ${/Redirecting|OTP|✅/i.test(msg) ? "success" : "error"}`}>{msg}</span>}
       </div>
     </form>
   );
