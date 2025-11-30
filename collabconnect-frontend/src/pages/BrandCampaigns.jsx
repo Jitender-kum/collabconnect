@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { motion } from "framer-motion";
-import { Calendar, DollarSign, Layout, PlusCircle } from "lucide-react";
+import { Calendar, DollarSign, Layout, PlusCircle, Trash2 } from "lucide-react"; // ✅ Trash icon imported
 import { useNavigate } from "react-router-dom";
-import "./Campaigns.css"; // Styling reuse
+import "./Campaigns.css"; 
 
 export default function BrandCampaigns() {
   const [campaigns, setCampaigns] = useState([]);
@@ -11,11 +11,31 @@ export default function BrandCampaigns() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  const fetchCampaigns = () => {
     api.get("/campaign/brand")
       .then(res => setCampaigns(res.data))
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  // ✅ DELETE FUNCTION
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this campaign? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/campaign/${id}`);
+      // UI se hatane ke liye filter karo (Reload ki zaroorat nahi)
+      setCampaigns(prev => prev.filter(c => c._id !== id));
+      alert("Campaign deleted successfully.");
+    } catch (err) {
+      alert("Failed to delete campaign.");
+    }
+  };
 
   return (
     <div className="page-container">
@@ -64,14 +84,24 @@ export default function BrandCampaigns() {
                  </div>
               </div>
 
-              <div className="card-footer">
+              <div className="card-footer" style={{gap: '10px'}}>
+                 {/* View Applicants Button */}
                  <button 
                    className="btn-gradient" 
-                   style={{width:'100%', justifyContent:'center'}}
-                   // ✅ MAIN CHANGE: URL mein ID bheja (?cid=...)
+                   style={{flex: 1, justifyContent:'center'}}
                    onClick={() => navigate(`/applicants?cid=${c._id}`)}
                  >
                    View Applicants
+                 </button>
+
+                 {/* ✅ DELETE BUTTON */}
+                 <button 
+                   className="btn-danger"
+                   style={{padding: '10px', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', color: '#f87171'}}
+                   onClick={() => handleDelete(c._id)}
+                   title="Delete Campaign"
+                 >
+                   <Trash2 size={18} />
                  </button>
               </div>
             </motion.div>

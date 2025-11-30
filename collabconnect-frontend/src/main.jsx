@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./auth";
 import "./styles.css"; // global styles
+import './Responsive.css';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>

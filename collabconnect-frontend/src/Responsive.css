@@ -1,0 +1,119 @@
+/* src/Responsive.css */
+
+/* --- MOBILE DEVICES (Tablets & Phones: Width < 768px) --- */
+@media (max-width: 768px) {
+
+  /* 1. Global Container Fixes */
+  .container.section,
+  .dashboard-container,
+  .page-container,
+  .auth-container {
+    padding: 1rem !important; /* Kam padding mobile ke liye */
+    padding-top: 5rem !important; /* Navbar ke liye jagah */
+  }
+
+  /* 2. Navigation Bar (Scrollable on Mobile) */
+  .nav-inner {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .nav .links {
+    width: 100%;
+    overflow-x: auto; /* Horizontal Scroll agar links zyada hon */
+    display: flex;
+    justify-content: flex-start;
+    padding-bottom: 5px;
+    gap: 15px;
+    -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+  }
+
+  .nav .brand {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* 3. Dashboard Header & Actions */
+  .welcome-section > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .welcome-section h1 {
+    font-size: 1.8rem !important; /* Chhota font title ke liye */
+  }
+
+  .action-section {
+    flex-direction: column; /* Buttons ek ke niche ek */
+    width: 100%;
+  }
+
+  .action-btn {
+    width: 100%; /* Full width buttons */
+    justify-content: center;
+  }
+
+  /* 4. Grids (Stats & Campaigns) */
+  .stats-grid,
+  .campaign-grid {
+    grid-template-columns: 1fr !important; /* Ek line mein ek card */
+    gap: 1rem !important;
+  }
+
+  /* 5. Glass Cards & Charts */
+  .glass-card {
+    padding: 1.2rem !important;
+  }
+
+  .chart-container {
+    padding: 1rem !important;
+    overflow-x: hidden; /* Horizontal scroll roko */
+  }
+
+  /* 6. Forms (Login/Register/Create) */
+  .create-form,
+  .auth-card {
+    padding: 1.5rem !important;
+    width: 100% !important;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  /* 7. Tables & Lists (Applicants) */
+  .glass-card > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .glass-card button {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Hide elements marked as 'hide-mobile' */
+  .hide-mobile {
+    display: none;
+  }
+}
+
+/* --- EXTRA SMALL DEVICES (Phones < 480px) --- */
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2.5rem !important;
+  }
+  
+  .btn-large {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .cta-group {
+    flex-direction: column;
+    width: 100%;
+  }
+}

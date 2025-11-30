@@ -55,3 +55,32 @@ export const getBrandCampaigns = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+export const deleteCampaign = async (req, res) => {
+  try {
+    const campaignId = req.params.id;
+    const brandId = req.user.id;
+
+    // 1. Campaign dhoondo
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) {
+      return res.status(404).json({ message: "Campaign not found" });
+    }
+
+    // 2. Check karo ki ye isi Brand ka campaign hai ya nahi
+    if (campaign.brandId.toString() !== brandId) {
+      return res.status(403).json({ message: "Unauthorized action" });
+    }
+
+    // 3. Delete karo
+    await Campaign.findByIdAndDelete(campaignId);
+
+    // Optional: Is campaign se judi applications bhi delete kar sakte ho
+    // await Application.deleteMany({ campaignId: campaignId });
+
+    res.json({ message: "Campaign deleted successfully" });
+  } catch (err) {
+    console.error("Delete Campaign Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
