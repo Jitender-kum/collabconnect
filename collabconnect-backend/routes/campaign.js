@@ -1,10 +1,14 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import { createCampaign, listCampaigns } from "../controllers/campaignController.js";
+import { createCampaign, listCampaigns, getBrandCampaigns } from "../controllers/campaignController.js";
 
 const router = express.Router();
 
 router.post("/create", authMiddleware, createCampaign);
-router.get("/", authMiddleware, listCampaigns);
+
+router.get("/brand", authMiddleware, getBrandCampaigns);
+
+// ✅ FIX: Route ko '/all' kiya taaki frontend ke call se match ho
+router.get("/all", authMiddleware, listCampaigns);
 
 export default router;

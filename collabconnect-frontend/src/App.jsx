@@ -1,7 +1,8 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "./auth";
 import { RequireAuth, RequireRole } from "./guards";
 
+// Pages Imports
 import Home from "./pages/Home";
 import RegisterInfluencer from "./pages/RegisterInfluencer";
 import RegisterBrand from "./pages/RegisterBrand";
@@ -11,17 +12,40 @@ import CampaignCreate from "./pages/CampaignCreate";
 import CampaignList from "./pages/CampaignList";
 import Applicants from "./pages/Applicants";
 import ProfilePublic from "./pages/ProfilePublic";
-import VerifyOTP from "./pages/VerifyOTP";  // ✅ move import here
-
+import VerifyOTP from "./pages/VerifyOTP";
+import Notifications from "./pages/Notifications";
+import BrandProfile from "./pages/BrandProfile";
+import BrandCampaigns from "./pages/BrandCampaigns";
+import InfluencerProfile from "./pages/InfluencerProfile";
 
 export default function App() {
   const { token, role, logout } = useAuth();
+  const location = useLocation();
+
+  // ✅ LIST UPDATE: In sabhi pages ko "Full Width" milega (No Container Restriction)
+  const isFullWidth = [
+    "/", 
+    "/login", 
+    "/register/influencer", 
+    "/register/brand", 
+    "/dashboard",
+    "/campaigns",       
+    "/campaign/create",
+    "/brand/profile", 
+    "/applicants",   
+    "/brand/campaigns",  
+    "/notifications",
+    "/influencer/profile"
+  ].includes(location.pathname);
 
   return (
     <>
+      {/* --- Navigation Bar --- */}
       <div className="nav">
         <div className="nav-inner">
-          <div className="brand"><div className="brand-badge" /> CollabConnect</div>
+          <div className="brand">
+            <div className="brand-badge" /> CollabConnect
+          </div>
           <div className="links">
             <Link className="link" to="/">Home</Link>
 
@@ -40,15 +64,18 @@ export default function App() {
 
             {!token && (
               <>
-                <Link className="link" to="/register/influencer">Register (Influencer)</Link>
-                <Link className="link" to="/register/brand">Register (Brand)</Link>
+                <Link className="link" to="/register/influencer">Creator Join</Link>
+                <Link className="link" to="/register/brand">Hire Creators</Link>
                 <Link className="link" to="/login">Login</Link>
               </>
             )}
 
             {token && (
-              <button className="link" style={{border:"none", background:"transparent", cursor:"pointer"}}
-                onClick={logout}>
+              <button 
+                className="link" 
+                style={{border:"none", background:"transparent", cursor:"pointer"}}
+                onClick={logout}
+              >
                 Logout
               </button>
             )}
@@ -56,51 +83,84 @@ export default function App() {
         </div>
       </div>
 
-      <div className="container section">
+      {/* --- Main Content Area --- */}
+      {/* Agar page 'isFullWidth' list mein hai, to 'container' class mat lagao */}
+      <div className={isFullWidth ? "" : "container section"}>
         <Routes>
 
+          {/* 1. Public Home Page */}
           <Route path="/" element={<Home/>} />
+          
+          {/* 2. Auth Pages (Fixed: Redirect logic instead of removing route) */}
+          <Route 
+            path="/register/influencer" 
+            element={!token ? <RegisterInfluencer/> : <Navigate to="/dashboard" replace />} 
+          />
+          <Route 
+            path="/register/brand" 
+            element={!token ? <RegisterBrand/> : <Navigate to="/dashboard" replace />} 
+          />
+          <Route 
+            path="/login" 
+            element={!token ? <Login/> : <Navigate to="/dashboard" replace />} 
+          />
 
-          {/* ✅ OTP Page is always allowed */}
-          <Route path="/verify-otp" element={<VerifyOTP />} />
+          {/* 3. Dashboard (Protected) */}
+          <Route path="/dashboard" element={
+            <RequireAuth>
+              <Dashboard/>
+            </RequireAuth>
+          } />
 
-          {!token && <Route path="/register/influencer" element={<SectionCard title="Register — Influencer"><RegisterInfluencer/></SectionCard>} />}
-          {!token && <Route path="/register/brand" element={<SectionCard title="Register — Brand"><RegisterBrand/></SectionCard>} />}
-          {!token && <Route path="/login" element={<SectionCard title="Login"><Login/></SectionCard>} />}
+          <Route path="/influencer/profile" element={
+            <RequireRole role="Influencer">
+              <InfluencerProfile />
+            </RequireRole>
+          } />
 
-          <Route path="/dashboard" element={<RequireAuth><SectionCard title="Dashboard"><Dashboard/></SectionCard></RequireAuth>} />
+          <Route path="/brand/campaigns" element={
+            <RequireRole role="Brand">
+              <BrandCampaigns />
+            </RequireRole>
+          } />
+          <Route path="/brand/profile" element={
+            <RequireRole role="Brand">
+              <BrandProfile />
+            </RequireRole>
+          } />
 
-          <Route path="/profile/:id" element={<ProfilePublic />} /> 
+          <Route path="/notifications" element={
+            <RequireAuth>
+              <Notifications />
+            </RequireAuth>
+          } />
 
+          {/* 4. Brand Specific Routes */}
           <Route path="/campaign/create" element={
             <RequireRole role="Brand">
-              <SectionCard title="Create Campaign"><CampaignCreate/></SectionCard>
+              <CampaignCreate/>
             </RequireRole>
           } />
 
           <Route path="/applicants" element={
             <RequireRole role="Brand">
-              <SectionCard title="Applicants"><Applicants/></SectionCard>
+              <Applicants/>
             </RequireRole>
           } />
 
+          {/* 5. Influencer Specific Routes */}
           <Route path="/campaigns" element={
             <RequireRole role="Influencer">
-              <SectionCard title="Campaigns"><CampaignList/></SectionCard>
+              <CampaignList/>
             </RequireRole>
           } />
+
+          {/* 6. Other Pages */}
+          <Route path="/profile/:id" element={<ProfilePublic />} /> 
+          <Route path="/verify-otp" element={<VerifyOTP />} />
 
         </Routes>
       </div>
     </>
   );
-}
-
-function SectionCard({ title, children }){
-  return (
-    <div className="card">
-      <h2>{title}</h2>
-      <div style={{marginTop:12}}>{children}</div>
-    </div>
-  )
 }

@@ -8,6 +8,7 @@ import userRoutes from "./routes/user.js";
 import campaignRoutes from "./routes/campaign.js";
 import applyRoutes from "./routes/apply.js";
 import applicantRoutes from "./routes/applicants.js";
+import notificationRoutes from "./routes/notification.js"; // ✅ Import kiya
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use("/user", userRoutes);
 app.use("/campaign", campaignRoutes);
 app.use("/application", applyRoutes);
 app.use("/applicants", applicantRoutes);
+app.use("/notifications", notificationRoutes); // ✅ Route add kiya
 
 app.get("/", (_, res) => res.send("CollabConnect Backend Running ✅"));
 

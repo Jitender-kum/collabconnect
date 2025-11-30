@@ -1,0 +1,137 @@
+/* Dashboard.css */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --text-main: #ffffff;
+  --text-secondary: #a0aec0;
+  --bg-dark: #0f172a;
+  --card-bg: #1e293b;
+}
+
+.dashboard-container {
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  padding: 2rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.welcome-section h1 {
+  font-size: 2.5rem;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 5;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  padding: 1.5rem;
+  border-radius: 16px;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  border-color: #667eea;
+}
+
+.stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.icon-box {
+  padding: 10px;
+  background: rgba(118, 75, 162, 0.2);
+  border-radius: 10px;
+  color: #a78bfa;
+}
+
+/* ✅ GRAPH FIX: Graph ko click block karne se roko */
+.chart-container {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  border: 1px solid var(--glass-border);
+  position: relative;
+  z-index: 1; 
+  /* IMP: Graph container par clicks disable kiye, taaki niche ke buttons click ho sakein */
+  pointer-events: none; 
+  margin-bottom: 2rem;
+}
+
+/* Tooltips wapas enable karne ke liye (Agar zaroorat ho) */
+.chart-container svg {
+  pointer-events: auto;
+}
+
+/* ✅ ACTION FIX: Container ko upar lao aur margin do */
+.action-section {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem; /* Thoda gap badhaya */
+  position: relative;
+  z-index: 999; /* Graph se bahut upar */
+  pointer-events: auto; /* Clicks enable kiye */
+}
+
+/* ✅ BUTTON FIX: Buttons ko force clickable banao */
+.action-btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 1000; /* Sabse upar */
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  color: white;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 15px rgba(118, 75, 162, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+}
+
+.btn-secondary:hover {
+  background: var(--glass-bg);
+}

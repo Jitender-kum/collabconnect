@@ -1,45 +1,85 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import api from "../api";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth";
+import { motion } from "framer-motion";
+import api from "../api";
+import "./Auth.css";
 
 export default function Login() {
-  const { login } = useAuth();
   const navigate = useNavigate();
-
+  const { login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setMsg("Logging in...");
+    setLoading(true);
+    setMsg("");
 
     try {
-      const { data } = await api.post("/auth/login", form);
+      const res = await api.post("/auth/login", form);
+      
+      // ✅ FIX: Pura 'user' object bhejo, sirf role nahi!
+      // Pehle: login(res.data.token, res.data.user.role); (GALAT ❌)
+      login(res.data.token, res.data.user); // (SAHI ✅)
 
-      // ✅ FIX: Store correct & full user object
-      login(data.token, data.user);   
-
-      setMsg("Login Successful ✅ Redirecting...");
-      setTimeout(() => navigate("/dashboard"), 600);
-
+      navigate("/dashboard");
     } catch (err) {
-      setMsg(err.response?.data?.message || "Error");
+      setMsg(err.response?.data?.message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form className="form" onSubmit={submit}>
-      <input className="input" type="email" placeholder="Email" value={form.email}
-        onChange={e=>setForm({...form, email:e.target.value})} required />
+    <div className="auth-container">
+      <motion.div 
+        className="auth-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2 className="auth-title">Welcome Back</h2>
+        <p className="auth-subtitle">Login to manage your collaborations</p>
 
-      <input className="input" type="password" placeholder="Password" value={form.password}
-        onChange={e=>setForm({...form, password:e.target.value})} required />
+        {msg && <div className="error-msg">{msg}</div>}
 
-      <div className="kv">
-        <button className="btn primary" type="submit">Login</button>
-        {msg && <span className={`notice ${/Successful|Redirect/i.test(msg)?'success':'error'}`}>{msg}</span>}
-      </div>
-    </form>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Email Address</label>
+            <input
+              className="auth-input"
+              type="email"
+              placeholder="name@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
+              className="auth-input"
+              type="password"
+              placeholder="Enter your password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+            />
+          </div>
+
+          <button className="auth-btn" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Don't have an account? <br/>
+          <Link to="/register/brand" className="auth-link">Register as Brand</Link> • <Link to="/register/influencer" className="auth-link">Register as Creator</Link>
+        </div>
+      </motion.div>
+    </div>
   );
 }
